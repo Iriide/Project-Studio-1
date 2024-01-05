@@ -9,13 +9,14 @@ import requests
 from selenium import webdriver
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
 
 latitude = None
 longitude = None
 power = None
 model = pickle.load(open('model.pkl', 'rb'))
-driver = webdriver.Chrome("C:\\Users\\asiaw\\.wdm\\drivers\\chromedriver\\win64\\120.0.6099.109\\chromedriver.exe")
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
 
 def get_current_location():
@@ -108,7 +109,7 @@ def calculate():
     for i in range(12):
         # Prepare data for the model prediction.
         array = np.array([i + 1, power, longitude, latitude, H_h_m[i], T2m[i]]).reshape(1, -1).astype(np.float64)
-        production_data.append(model.predict(array))
+        production_data.append(int(model.predict(array)))
 
     # Display the predicted energy production.
     chart = create_chart(production_data)
@@ -122,7 +123,9 @@ def calculate():
 
 def create_chart(production_data):
     months = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-    fig, ax = plt.subplots()
+    px = 1 / plt.rcParams['figure.dpi'] # pixel in inches
+    fig, ax = plt.subplots(figsize=(400*px, 350*px))
+    fig.subplots_adjust(left=0.2, bottom=0.2, right=0.95, top=0.9, wspace=0.2, hspace=0.2)
     ax.plot(months, production_data)
     ax.set_xlabel('Miesiące')
     ax.set_ylabel('Produkcja energii (kWh)')
@@ -148,7 +151,7 @@ def update_map_image(coordinates, output_image_path='map_image.png'):
     mapa.save("mapa_polski.html")
     sleep(0.5)  # Wait for the file to be saved properly.
     driver.get(html_file.as_uri())
-    driver.set_window_size(400, 600)
+    driver.set_window_size(300, 500)
     sleep(0.5)  # Wait for the map to be loaded properly.
     # Capture a screenshot of the HTML map and save it as an image.
     driver.save_screenshot(output_image_path)
